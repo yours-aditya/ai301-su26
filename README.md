@@ -1,9 +1,9 @@
 # Contribution [#]: [Issue Title]
 
-**Contribution Number:** 1  
+**Contribution Number:** 2  
 **Student:** Aditya Devarapalli  
 **Issue:** [Link](https://github.com/medusajs/medusa/issues/15178)  
-**Status:** Phase I  Complete
+**Status:** Phase II  Complete
 
 ---
 
