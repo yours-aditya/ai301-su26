@@ -1,9 +1,9 @@
-# Contribution [#]: [Issue Title]
+# Contribution [3]: [Issue Title]
 
 **Contribution Number:** 2  
 **Student:** Aditya Devarapalli  
 **Issue:** [Link](https://github.com/medusajs/medusa/issues/15178)  
-**Status:** Phase II  Complete
+**Status:** Phase III  Complete
 
 ---
 
@@ -78,20 +78,40 @@ Change the cache config for `product_variant_inventory_items` cache. This makes 
 
 Using UMPIRE framework (adapted):
 
-**Understand:** [Restate the problem]
+**Understand:** The `product_variant_inventory_items` query inside `getDataForComputation` was being cached without cache tags. If a variant initially had inventory management disabled, the query returned an empty array and cached that empty result. Later, when inventory management was enabled and an inventory item was linked, the cache was not invalidated, so Medusa continued returning stale inventory availability data.
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+**Match:** The nearby `sales_channel_locations` query already uses cache tags to invalidate cached data when related sales channel or stock location data changes. The fix follows the same pattern by attaching relevant cache tags to the `product_variant_inventory_items` query
 
-**Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+**Plan:**
+1. Modify `packages/core/utils/src/product/get-variant-availability.ts`
+2. Add cache tags to the `product_variant_inventory_items query`
+3. Tag the cache by queried product variant IDs and add inventory-related list tags so inventory item changes or variant-inventory links can invalidate the cached result.
+4. Run existing tests around product variant availability and inventory behavior and manually verify the reproduction flow with caching enabled.
 
-**Implement:** [Link to your branch/commits as you work]
+**Implement:** Implemented by updating the cache configuration for the `product_variant_inventory_items` query to include invalidation tags such as:
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
+tags: [
+  ...data.variant_ids.map((id) => `ProductVariant:${id}`),
+  "InventoryItem:list:*",
+  "ProductVariantInventoryItem:list:*",
+]
 
-**Evaluate:** [How will you verify it works?]
+This ensures the cached query result is invalidated when a product variant, inventory item, or variant-inventory-item relationship changes.
+
+**Review:**
+- Change is scoped to the availability computation path.
+
+- Cache behavior now matches the surrounding query patterns.
+
+- No unrelated product or inventory logic was changed.
+
+- Cache tags are tied to the relevant entities.
+
+- Code follows the existing Medusa style.
+
+- Existing behavior remains unchanged when caching is disabled.
+
+**Evaluate:** The fix should prevent stale empty inventory-item results from being reused after inventory management is enabled and an inventory item is linked to a variant.
 
 ---
 
@@ -99,14 +119,14 @@ Using UMPIRE framework (adapted):
 
 ### Unit Tests
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+- [ ] Test case 1: Variant with inventory management disabled returns no linked inventory items
+- [ ] Test case 2: After enabling inventory management and linking an inventory item, the query returns the new inventory item instead of stale cached `[]`
+- [ ] Test case 3: Updating inventory item or stock level invalidates availability-related cached data
 
 ### Integration Tests
 
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+- [ ] Integration scenario 1: Create product variant with inventory management disabled, load product once, then enable inventory management and link inventory item. Verify `variant.inventory_quantity` updates correctly
+- [ ] Integration scenario 2: Add stock to the linked inventory item and verify product/admin/storefront queries return the updated inventory quantity.
 
 ### Manual Testing
 
