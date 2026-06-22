@@ -41,9 +41,20 @@ The cache stores an empty `product_variant_inventory_items` result when a varian
 
 ### Steps to Reproduce
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. Enable the Medusa caching module
+2. Create a product with at least one variant
+3. While creating the variant, keep Inventory Management off
+4. Open the product detail page
+5. This triggers `product_variant_inventory_items` query
+6. Since no inventory item is linked yet, the query returns `[]`
+7. That empty result gets cached without cache tags
+8. Edit the variant and turn Inventory Management on
+9. Create an inventory item and link it to the variant
+10. Reopen the product detail page.
+11. The variant still shows incorrect inventory, usually `inventory_quantity: null`, because Medusa keeps reading the stale cached `[]`
+12. Add stock to the linked inventory item
+13. Reopen the product or query it from the storefront
+14. Inventory is still incorrect until the cache TTL expires
 
 ### Reproduction Evidence
 
@@ -57,11 +68,11 @@ The cache stores an empty `product_variant_inventory_items` result when a varian
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+The `product_variant_inventory_items` query is cached, but it has no cache invalidation tags. So when a variant later gets linked to an inventory item, Medusa has no way to know that this cached query result should be invalidated.
 
 ### Proposed Solution
 
-[High-level description of your fix approach]
+Change the cache config for `product_variant_inventory_items` cache. This makes the cache invalidate when the variant changes, inventory items change, and variant-to-inventory links change.
 
 ### Implementation Plan
 
