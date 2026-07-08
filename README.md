@@ -2,7 +2,7 @@
 
 **Contribution Number:** 5  
 **Student:** Aditya Devarapalli  
-**Issue:** [Link]([https://github.com/omnigent-ai/omnigent/issues/1921])  
+**Issue:** [Link](https://github.com/omnigent-ai/omnigent/issues/1921)  
 **Status:** Phase V  Complete
 
 ---
